@@ -11,13 +11,13 @@ session_start();
     <style>
         /* Custom button style */
         .btn-primary {
-            background-color: #028a0f;
-            border-color: #028a0f;
+            background-color: #0D6EFD;
+            border-color: #0D6EFD;
         }
 
         .btn-primary:hover {
-            background-color: #026f0c;
-            border-color: #026f0c;
+            background-color: #0b5ed7;
+            border-color: #0b5ed7;
         }
     </style>
 </head>
@@ -65,12 +65,11 @@ session_start();
                     // Vérification du mot de passe
                     if ($user && password_verify($password, $user['mot_de_passe'])) {
                         $_SESSION['username'] = $username; // Stocker le nom d'utilisateur dans la session
-                    
                         echo '<div class="alert alert-success">Connexion réussie ! Redirection en cours...</div>';
                         echo '<script>
                             setTimeout(function() {
                                 window.location.href = "Stage.php";
-                            }, 1000); // redirige après 1 seconde
+                            }, 1000);
                         </script>';
                         exit();
                     } else {

@@ -23,9 +23,11 @@ $result = $conn->query($sql);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <style>
-        body {
+        .admin-page {
             background-color: #f5f5f5;
-            padding: 20px;
+            padding-top: 0px;
+            padding-left: 0px;
+            padding-right: 0px;
         }
         .btn-add {
             background-color: #4CAF50;
@@ -56,7 +58,7 @@ $result = $conn->query($sql);
         }
     </style>
 </head>
-<body>
+<body class="admin-page">
 
 <?php include 'navbaradmin.php'; ?>
 

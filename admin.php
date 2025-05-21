@@ -1,11 +1,4 @@
 <?php
-// bdd.php
-$servername = "localhost";
-$dbname = "informatique";
-$dbusername = "root";
-$dbpassword = "";
-?>
-<?php
 session_start();
 include 'bdd.php';
 
@@ -13,25 +6,22 @@ try {
     $pdo = new PDO("mysql:host=$servername;dbname=$dbname;charset=utf8", $dbusername, $dbpassword);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Récupération des prix min et max
     $priceQuery = $pdo->query("SELECT MIN(prix) AS min_price, MAX(prix) AS max_price FROM produit");
     $priceResult = $priceQuery->fetch(PDO::FETCH_ASSOC);
     $minPrice = $priceResult['min_price'] ?? 0;
     $maxPrice = $priceResult['max_price'] ?? 500;
 
-    // Construction de la requête SQL
     $sql = "SELECT * FROM produit WHERE 1=1";
     $filterConditions = [];
 
-    // Gestion des filtres de type
     if (isset($_GET['filter_souris'])) {
         $filterConditions[] = "description = 'Souris'";
     }
+
     if (isset($_GET['filter_clavier'])) {
         $filterConditions[] = "description = 'Clavier'";
     }
 
-    // Gestion des filtres de prix
     if (isset($_GET['price_min']) && isset($_GET['price_max'])) {
         $min_price = (float)$_GET['price_min'];
         $max_price = (float)$_GET['price_max'];
@@ -45,8 +35,8 @@ try {
     $stmt = $pdo->prepare($sql);
 
     if (isset($min_price) && isset($max_price)) {
-        $stmt->bindParam(':min_price', $min_price, PDO::PARAM_STR);
-        $stmt->bindParam(':max_price', $max_price, PDO::PARAM_STR);
+        $stmt->bindParam(':min_price', $min_price);
+        $stmt->bindParam(':max_price', $max_price);
     }
 
     $stmt->execute();
@@ -54,126 +44,201 @@ try {
 
 } catch (PDOException $e) {
     echo "Erreur : " . $e->getMessage();
-    exit;
+    $produit = [];
+    $minPrice = 0;
+    $maxPrice = 500;
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vente de Souris et Claviers</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <title>Boutique Claviers & Souris</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- noUiSlider -->
+    <link href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css" rel="stylesheet">
+
     <style>
-        .btn-primary, .price-slider input[type="range"]::-webkit-slider-thumb, .card .btn-primary {
-            background-color: #028a0f;
-            border-color: #028a0f;
+        body {
+            font-family: "Segoe UI", sans-serif;
         }
-        .btn-primary:hover {
-            background-color: #026f0c;
-            border-color: #026f0c;
+
+        .amazon-sidebar {
+            font-size: 0.9rem;
         }
-        .price-slider input[type="range"] {
-            width: 200px;
-            height: 5px;
-            appearance: none;
-            background: #ddd;
-            border-radius: 5px;
-            outline: none;
-            cursor: pointer;
+
+        .amazon-sidebar h6 {
+            font-size: 0.95rem;
+            margin-top: 1rem;
         }
-        .price-slider input[type="range"]::-webkit-slider-thumb {
-            appearance: none;
-            width: 15px;
-            height: 15px;
-            background: #028a0f;
+
+        .product-card img {
+            height: 200px;
+            object-fit: contain;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+        }
+
+        .card-text {
+            font-size: 1rem;
+        }
+
+        .amazon-sidebar ul {
+            padding-left: 0;
+            list-style: none;
+        }
+
+        .amazon-sidebar ul li {
+            margin-bottom: 6px;
+        }
+
+        .amazon-sidebar ul li a {
+            text-decoration: none;
+            color: #007185;
+        }
+
+        .amazon-sidebar ul li a:hover {
+            text-decoration: underline;
+        }
+
+        /* Amazon-like slider style */
+        #priceSlider .noUi-connect {
+            background: #017185;
+        }
+
+        #priceSlider .noUi-handle {
             border-radius: 50%;
-            cursor: pointer;
+            background-color: #017185;
+            border: 2px solid white;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+            width: 20px;
+            height: 20px;
+            top: 0px;
         }
-        .price-values span {
-            font-weight: bold;
-            color: #028a0f;
+
+        #priceSlider .noUi-target {
+            background: #e3e3e3;
+            border: none;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
         }
     </style>
 </head>
 <body>
-<?php include 'navbaradmin.php'; ?>
 
-<div class="container mt-5">
-    <h1 class="text-center">Boutique Souris et Claviers (affichage admin)</h1>
+<?php include 'navbar.php'; ?>
 
-    <!-- Formulaire de filtres -->
-    <form method="get" id="filterForm" class="mb-4">
-        <div>
-            <label><input type="checkbox" name="filter_souris" <?php echo isset($_GET['filter_souris']) ? 'checked' : ''; ?>> Souris</label>
-            <label><input type="checkbox" name="filter_clavier" <?php echo isset($_GET['filter_clavier']) ? 'checked' : ''; ?>> Claviers</label>
-        </div>
-
-        <div class="mt-3 price-slider">
-            <input type="range" name="price_min" min="<?php echo $minPrice; ?>" max="<?php echo $maxPrice; ?>" value="<?php echo isset($_GET['price_min']) ? $_GET['price_min'] : $minPrice; ?>" step="1" id="minPrice">
-            <input type="range" name="price_max" min="<?php echo $minPrice; ?>" max="<?php echo $maxPrice; ?>" value="<?php echo isset($_GET['price_max']) ? $_GET['price_max'] : $maxPrice; ?>" step="1" id="maxPrice">
-        </div>
-        <div class="price-values">
-            <span>Prix min : <span id="price-min"><?php echo isset($_GET['price_min']) ? $_GET['price_min'] : $minPrice; ?></span> €</span>
-            <span>Prix max : <span id="price-max"><?php echo isset($_GET['price_max']) ? $_GET['price_max'] : $maxPrice; ?></span> €</span>
-        </div>
-    </form>
-
-    <!-- Affichage des produits -->
+<div class="container-fluid mt-4">
     <div class="row">
-        <?php foreach ($produit as $produit): ?>
-            <div class="col-md-4">
-                <div class="card mb-4">
-                    <img src="<?php echo htmlspecialchars($produit['image']); ?>" class="card-img-top" alt="<?php echo htmlspecialchars($produit['nom']); ?>">
-                    <div class="card-body">
-                        <h5 class="card-title"><?php echo htmlspecialchars($produit['nom']); ?></h5>
-                        <p class="card-text">€<?php echo htmlspecialchars($produit['prix']); ?></p>
-                        <a href="product_detail.php?id=<?php echo $produit['produit_id']; ?>" class="btn btn-primary">Voir Détails</a>
-                    </div>
+        <!-- Sidebar style Amazon -->
+        <div class="col-md-2">
+            <form method="get" id="filterForm" class="amazon-sidebar bg-white p-3 border rounded shadow-sm">
+                <h6 class="fw-bold mb-2">Catégorie</h6>
+                <div class="form-check mb-1">
+                    <input class="form-check-input" type="checkbox" name="filter_souris" id="filterSouris" <?= isset($_GET['filter_souris']) ? 'checked' : '' ?>>
+                    <label class="form-check-label small" for="filterSouris">🖱️ Souris</label>
                 </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="filter_clavier" id="filterClavier" <?= isset($_GET['filter_clavier']) ? 'checked' : '' ?>>
+                    <label class="form-check-label small" for="filterClavier">⌨️ Claviers</label>
+                </div>
+
+                <h6 class="fw-bold mt-4 mb-2">Prix</h6>
+                <div id="priceSlider" class="mb-2"></div>
+                <input type="hidden" id="hiddenMinPrice" name="price_min" value="<?= $_GET['price_min'] ?? $minPrice ?>">
+                <input type="hidden" id="hiddenMaxPrice" name="price_max" value="<?= $_GET['price_max'] ?? $maxPrice ?>">
+
+                <div class="d-flex justify-content-between mb-3">
+                    <small><strong id="price-min-label"><?= $_GET['price_min'] ?? $minPrice ?></strong> €</small>
+                    <small><strong id="price-max-label"><?= $_GET['price_max'] ?? $maxPrice ?></strong> €</small>
+                </div>
+
+                <div class="d-grid mb-3">
+                    <button type="submit" class="btn btn-outline-secondary btn-sm">Appliquer</button>
+                </div>
+
+                <h6 class="fw-bold mb-2">Tranches de prix</h6>
+                <ul class="small">
+                    <li><a href="?price_max=50">Jusqu’à 50 €</a></li>
+                    <li><a href="?price_min=50&price_max=70">50 € à 70 €</a></li>
+                    <li><a href="?price_min=70&price_max=100">70 € à 100 €</a></li>
+                    <li><a href="?price_min=100&price_max=150">100 € à 150 €</a></li>
+                    <li><a href="?price_min=150">150 € et plus</a></li>
+                </ul>
+            </form>
+        </div>
+
+        <!-- Zone Produits -->
+        <div class="col-md-10">
+            <h2 class="mb-4">🛍️ Nos Produits</h2>
+            <div class="row g-4">
+                <?php if (!empty($produit)): ?>
+                    <?php foreach ($produit as $p): ?>
+                        <div class="col-sm-6 col-lg-4 d-flex">
+                            <div class="card product-card h-100 w-100 p-2">
+                                <img src="<?= htmlspecialchars($p['image']) ?>" class="card-img-top" alt="<?= htmlspecialchars($p['nom']) ?>">
+                                <div class="card-body d-flex flex-column justify-content-between">
+                                    <div>
+                                        <h5 class="card-title"><?= htmlspecialchars($p['nom']) ?></h5>
+                                        <p class="card-text fw-semibold">€<?= number_format($p['prix'], 2, ',', ' ') ?></p>
+                                    </div>
+                                    <a href="product_detail.php?id=<?= $p['produit_id'] ?>" class="btn btn-primary mt-2">Voir Détails</a>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p class="text-center">Aucun produit ne correspond aux filtres sélectionnés.</p>
+                <?php endif; ?>
             </div>
-        <?php endforeach; ?>
+        </div>
     </div>
 </div>
 
 <?php include 'footers.php'; ?>
 
+<!-- JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.js"></script>
 <script>
-    const minSlider = document.getElementById('minPrice');
-    const maxSlider = document.getElementById('maxPrice');
-    const minPriceLabel = document.getElementById('price-min');
-    const maxPriceLabel = document.getElementById('price-max');
-    const filterForm = document.getElementById('filterForm');
+document.addEventListener('DOMContentLoaded', () => {
+    const slider = document.getElementById('priceSlider');
+    const hiddenMin = document.getElementById('hiddenMinPrice');
+    const hiddenMax = document.getElementById('hiddenMaxPrice');
+    const labelMin = document.getElementById('price-min-label');
+    const labelMax = document.getElementById('price-max-label');
 
-    // Fonction pour mettre à jour et soumettre le formulaire
-    function updateFilters() {
-        filterForm.submit();
-    }
-
-    // Mise à jour des prix affichés et soumission automatique
-    minSlider.addEventListener('input', function () {
-        if (parseInt(minSlider.value) > parseInt(maxSlider.value)) {
-            maxSlider.value = minSlider.value;
+    noUiSlider.create(slider, {
+        start: [<?= $_GET['price_min'] ?? $minPrice ?>, <?= $_GET['price_max'] ?? $maxPrice ?>],
+        connect: true,
+        step: 1,
+        range: {
+            min: <?= $minPrice ?>,
+            max: <?= $maxPrice ?>
+        },
+        format: {
+            to: function (value) {
+                return Math.round(value);
+            },
+            from: function (value) {
+                return Number(value);
+            }
         }
-        minPriceLabel.textContent = minSlider.value;
-        updateFilters();
     });
 
-    maxSlider.addEventListener('input', function () {
-        if (parseInt(maxSlider.value) < parseInt(minSlider.value)) {
-            minSlider.value = maxSlider.value;
-        }
-        maxPriceLabel.textContent = maxSlider.value;
-        updateFilters();
+    slider.noUiSlider.on('update', (values) => {
+        hiddenMin.value = values[0];
+        hiddenMax.value = values[1];
+        labelMin.textContent = values[0];
+        labelMax.textContent = values[1];
     });
-
-    // Soumission automatique des filtres lors du changement des cases à cocher
-    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-    checkboxes.forEach(function (checkbox) {
-        checkbox.addEventListener('change', function () {
-            updateFilters();
-        });
-    });
+});
 </script>
+
 </body>
 </html>
