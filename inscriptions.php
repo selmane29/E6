@@ -5,6 +5,7 @@ $registrationSuccess = false;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+
 require 'vendor/autoload.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -45,54 +46,46 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         try {
             $conn = new PDO("mysql:host=localhost;dbname=informatique", "root", "");
             $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
+    
             $password_hash = password_hash($password, PASSWORD_DEFAULT);
-
+    
             $stmt = $conn->prepare("INSERT INTO client (nom, email, mot_de_passe) VALUES (:nom, :email, :password)");
             $stmt->bindParam(':nom', $username);
             $stmt->bindParam(':email', $email);
             $stmt->bindParam(':password', $password_hash);
-
             $stmt->execute();
-
-            // Envoi de l'email de bienvenue avec PHPMailer
+    
+            // Envoi de l'email
             $mail = new PHPMailer(true);
-            try {
-                $mail->isSMTP();
-                $mail->Host       = 'smtp.office365.com';
-                $mail->SMTPAuth   = true;
-                $mail->Username   = 'selmane.292002@outlook.fr'; // email de l'éxpéditeur (moi)
-                $mail->Password   = '@Lacitrouillen1'; //  Mot de passe de l'éxpéditeur du compte outlook (moi)
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-                $mail->Port       = 587;
-
-                $mail->setFrom('selmane.292002@outlook.fr', 'Informatique.net');
-                $mail->addAddress($email, $username);
-
-                $mail->isHTML(true);
-                $mail->Subject = 'Bienvenue chez informatique.net !';
-                $mail->Body    = "
-                    <h2>Bonjour $username,</h2>
-                    <p>Merci pour votre inscription. Nous sommes ravis de vous compter parmi nous !</p>
-                    <p>À bientôt,<br><strong>L’équipe</strong></p>
-                ";
-
-                $mail->send();
-            } catch (Exception $e) {
-                error_log("Erreur d'envoi d'email : {$mail->ErrorInfo}");
+    
+            $mail->isSMTP();
+            $mail->Host       = 'smtp.office365.com';
+            $mail->SMTPAuth   = true;
+            $mail->Username   = 'selmane.292002@outlook.fr';
+            $mail->Password   = '@Lacitrouillen1'; // ⚠ mot de passe app recommandé
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port       = 587;
+    
+            $mail->setFrom('selmane.292002@outlook.fr', 'Informatique.net');
+            $mail->addAddress($email, $username);
+    
+            $mail->isHTML(true);
+            $mail->Subject = 'Bienvenue chez informatique.net !';
+            $mail->Body    = "<h1>Bienvenue $username !</h1><p>Merci de votre inscription.</p>";
+    
+            if (!$mail->send()) {
                 echo "Erreur d'envoi : " . $mail->ErrorInfo;
-
             }
-            
-            $registrationSuccess = true;
+    
+            // ✅ Redirection si tout est OK
             header("Location: connection.php");
             exit();
-        } catch (PDOException $e) {
-            $errors[] = "Erreur : " . $e->getMessage();
+    
+        } catch (Exception $e) {
+            echo "Erreur d'envoi : " . $e->getMessage();
         }
-        $conn = null;
     }
-}
+}              
 ?>
 
 <!DOCTYPE html>
