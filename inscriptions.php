@@ -79,7 +79,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                 $mail->send();
             } catch (Exception $e) {
-                error_log("Erreur d'envoi d'email : {$mail->ErrorInfo}");
+                echo "Erreur d'envoi : " . $mail->ErrorInfo;
             }
             
             $registrationSuccess = true;
