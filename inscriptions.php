@@ -2,6 +2,11 @@
 session_start();
 $registrationSuccess = false;
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require 'vendor/autoload.php';
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = $_POST['username'] ?? '';
     $email = $_POST['email'] ?? '';
@@ -50,6 +55,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             $stmt->execute();
 
+            // Envoi de l'email de bienvenue avec PHPMailer
+            $mail = new PHPMailer(true);
+            try {
+                $mail->isSMTP();
+                $mail->Host       = 'smtp.office365.com';
+                $mail->SMTPAuth   = true;
+                $mail->Username   = 'selmane.292002@outlook.fr'; // email de l'éxpéditeur (moi)
+                $mail->Password   = '@Lacitrouillen1'; //  Mot de passe de l'éxpéditeur du compte outlook (moi)
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->Port       = 587;
+
+                $mail->setFrom('selmane.292002@outlook.fr', 'Informatique.net');
+                $mail->addAddress($email, $username);
+
+                $mail->isHTML(true);
+                $mail->Subject = 'Bienvenue chez informatique.net !';
+                $mail->Body    = "
+                    <h2>Bonjour $username,</h2>
+                    <p>Merci pour votre inscription. Nous sommes ravis de vous compter parmi nous !</p>
+                    <p>À bientôt,<br><strong>L’équipe</strong></p>
+                ";
+
+                $mail->send();
+            } catch (Exception $e) {
+                error_log("Erreur d'envoi d'email : {$mail->ErrorInfo}");
+            }
+            
             $registrationSuccess = true;
             header("Location: connection.php");
             exit();
@@ -75,7 +107,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <div class="container mt-5">
     <h1>Inscription</h1>
-
     <?php if (!$registrationSuccess): ?>
         <form action="inscriptions.php" method="post">
             <div class="mb-3">
@@ -95,7 +126,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <input type="password" class="form-control" id="confirm-password" name="confirm-password" required>
             </div>
 
-            <!-- reCAPTCHA v2 -->
             <div class="g-recaptcha mb-3" data-sitekey="6Le9YEkrAAAAAGd1U-aVxOK70P739SFxtYfxeioT"></div>
 
             <button type="submit" class="btn btn-primary">S'inscrire</button>
