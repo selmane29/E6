@@ -131,7 +131,7 @@ try {
 </head>
 <body>
 
-<?php include 'navbar.php'; ?>
+<?php include 'navbaradmin.php'; ?>
 
 <div class="container-fluid mt-4">
     <div class="row">
@@ -175,7 +175,7 @@ try {
 
         <!-- Zone Produits -->
         <div class="col-md-10">
-            <h2 class="mb-4">🛍️ Nos Produits</h2>
+            <h2 class="mb-4">🛍️ Nos Produits (Affichage admin)</h2>
             <div class="row g-4">
                 <?php if (!empty($produit)): ?>
                     <?php foreach ($produit as $p): ?>
@@ -242,3 +242,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
+
+
+
+
+

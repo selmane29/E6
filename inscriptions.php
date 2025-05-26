@@ -1,16 +1,14 @@
 <?php
 session_start();
-$registrationSuccess = false; // Initialisation de la variable de succès
+$registrationSuccess = false;
 
-// Traitement du formulaire lorsqu'il est soumis
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Récupération des données
     $username = $_POST['username'] ?? '';
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
     $confirmPassword = $_POST['confirm-password'] ?? '';
+    $recaptchaResponse = $_POST['g-recaptcha-response'] ?? '';
 
-    // Initialisation des messages d'erreur
     $errors = [];
 
     // Vérification des champs
@@ -27,31 +25,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $errors[] = "Les mots de passe doivent être identiques.";
     }
 
-    // Si pas d'erreurs, traiter l'inscription
+    // Vérification du reCAPTCHA
+    $recaptchaSecret = '6Le9YEkrAAAAAAzaNJPm_APpoux7cVzspWKiAgLC';
+    $verifyResponse = file_get_contents(
+        "https://www.google.com/recaptcha/api/siteverify?secret={$recaptchaSecret}&response={$recaptchaResponse}"
+    );
+    $responseData = json_decode($verifyResponse);
+
+    if (!$responseData->success) {
+        $errors[] = "Vérification reCAPTCHA échouée. Veuillez réessayer.";
+    }
+
     if (empty($errors)) {
-        // Connexion à la base de données
         try {
             $conn = new PDO("mysql:host=localhost;dbname=informatique", "root", "");
             $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-            // Hacher le mot de passe
             $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
-            // Préparer la requête d'insertion
             $stmt = $conn->prepare("INSERT INTO client (nom, email, mot_de_passe) VALUES (:nom, :email, :password)");
             $stmt->bindParam(':nom', $username);
             $stmt->bindParam(':email', $email);
             $stmt->bindParam(':password', $password_hash);
 
-            // Exécution
             $stmt->execute();
 
-            // Définir la variable de succès et rediriger
             $registrationSuccess = true;
-
-            // Redirection vers la page de connexion après l'inscription réussie
             header("Location: connection.php");
-            exit();  // Arrêter l'exécution après la redirection
+            exit();
         } catch (PDOException $e) {
             $errors[] = "Erreur : " . $e->getMessage();
         }
@@ -66,6 +67,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <title>Inscription</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
 
@@ -74,7 +76,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <div class="container mt-5">
     <h1>Inscription</h1>
 
-    <!-- Formulaire d'inscription -->
     <?php if (!$registrationSuccess): ?>
         <form action="inscriptions.php" method="post">
             <div class="mb-3">
@@ -93,14 +94,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <label for="confirm-password" class="form-label">Confirmer le mot de passe :</label>
                 <input type="password" class="form-control" id="confirm-password" name="confirm-password" required>
             </div>
+
+            <!-- reCAPTCHA v2 -->
+            <div class="g-recaptcha mb-3" data-sitekey="6Le9YEkrAAAAAGd1U-aVxOK70P739SFxtYfxeioT"></div>
+
             <button type="submit" class="btn btn-primary">S'inscrire</button>
         </form>
 
         <p id="error-msg"></p>
 
-        <!-- Affichage des erreurs -->
         <?php if (!empty($errors)): ?>
-            <div class="alert alert-danger">
+            <div class="alert alert-danger mt-3">
                 <ul>
                     <?php foreach ($errors as $error): ?>
                         <li><?= htmlspecialchars($error) ?></li>
@@ -108,7 +112,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </ul>
             </div>
         <?php endif; ?>
-
     <?php endif; ?>
 </div>
 
@@ -121,14 +124,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (password !== confirmPassword) {
             errorMsg.textContent = "Les mots de passe ne correspondent pas.";
             errorMsg.style.color = "red";
-            return false; 
+            return false;
         }
         return true;
     }
 </script>
 
 <?php include('footers.php'); ?>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
