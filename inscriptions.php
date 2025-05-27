@@ -57,16 +57,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
             // Envoi de l'email
             $mail = new PHPMailer(true);
-    
+
+            $mail->SMTPDebug = 2; // ou 3 pour plus de détails
+            $mail->Debugoutput = 'html'; // debug
             $mail->isSMTP();
-            $mail->Host       = 'smtp.office365.com';
+            $mail->Host       = 'smtp.gmail.com';
             $mail->SMTPAuth   = true;
-            $mail->Username   = 'selmane.292002@outlook.fr';
-            $mail->Password   = '@Lacitrouillen1'; // ⚠ mot de passe app recommandé
+            $mail->Username   = 'selmane.292002@gmail.com';
+            $mail->Password   = 'dqgzvbbrwflxwzla'; // ⚠ mot de passe d'application recommandé
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = 587;
     
-            $mail->setFrom('selmane.292002@outlook.fr', 'Informatique.net');
+            $mail->setFrom('selmane.292002@gmail.com', 'Informatique.net');
             $mail->addAddress($email, $username);
     
             $mail->isHTML(true);
@@ -75,6 +77,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
             if (!$mail->send()) {
                 echo "Erreur d'envoi : " . $mail->ErrorInfo;
+                exit(); //exit que je viens d'ajouter
             }
     
             // ✅ Redirection si tout est OK
