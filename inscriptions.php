@@ -58,13 +58,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Envoi de l'email
             $mail = new PHPMailer(true);
 
-            $mail->SMTPDebug = 2; // ou 3 pour plus de détails
-            $mail->Debugoutput = 'html'; // debug
+            $mail->SMTPDebug = 2;
+            $mail->Debugoutput = 'html'; // debug du mailer
             $mail->isSMTP();
             $mail->Host       = 'smtp.gmail.com';
             $mail->SMTPAuth   = true;
             $mail->Username   = 'selmane.292002@gmail.com';
-            $mail->Password   = 'dqgzvbbrwflxwzla'; // ⚠ mot de passe d'application recommandé
+            $mail->Password   = 'dqgzvbbrwflxwzla'; // ⚠ mot de passe d'application 
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = 587;
     
