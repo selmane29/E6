@@ -261,7 +261,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             
             <div class="buttons">
                 <button type="submit" class="btn btn-primary">Mettre à jour</button>
-                <a href="admin_produits.php" class="btn btn-secondary">Annuler</a>
+                <a href="stock.php" class="btn btn-secondary">Annuler</a>
             </div>
         </form>
     </div>
