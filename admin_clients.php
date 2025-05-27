@@ -25,7 +25,12 @@ try {
     $totalPages = ceil($totalClients / $resultsPerPage);
 
     $query = "SELECT c.client_id, c.nom, c.email, 
-             GROUP_CONCAT(DISTINCT ca.ville, ', ', ca.code_postal, ', ', ca.pays SEPARATOR ' | ') as adresses
+            GROUP_CONCAT(
+              DISTINCT CONCAT(
+                ca.client_adresse, ', ', ca.ville, ', ', ca.code_postal, ', ', ca.pays
+              ) SEPARATOR ' | '
+            ) AS adresses
+
              FROM client c
              LEFT JOIN client_adresse ca ON c.client_id = ca.client_id
              $searchCondition

@@ -1,8 +1,7 @@
 <?php
 // Configuration de la base de données
-include 'bdd.php'; // s'assurer que ce fichier contient les variables $servername, $dbname, $dbusername, $dbpassword
+include 'bdd.php';
 
-// Initialisation des variables
 $client_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $nom = '';
 $email = '';
@@ -14,15 +13,12 @@ try {
     $pdo = new PDO("mysql:host=$servername;dbname=$dbname;charset=utf8", $dbusername, $dbpassword);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-    
-    // Si le formulaire est soumis
+
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        // Récupération des données du formulaire
         $nom = trim($_POST['nom'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $new_password = trim($_POST['new_password'] ?? '');
-        
-        // Validation des données
+
         if (empty($nom)) {
             $error = 'Le nom est requis';
         } elseif (empty($email)) {
@@ -30,44 +26,39 @@ try {
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error = 'L\'email n\'est pas valide';
         } else {
-            // Vérifier si l'email existe déjà pour un autre client
             $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM client WHERE email = :email AND client_id != :client_id");
             $checkStmt->bindParam(':email', $email, PDO::PARAM_STR);
             $checkStmt->bindParam(':client_id', $client_id, PDO::PARAM_INT);
             $checkStmt->execute();
-            
+
             if ($checkStmt->fetchColumn() > 0) {
                 $error = 'Cet email est déjà utilisé par un autre client';
             } else {
-                // Début de la transaction
                 $pdo->beginTransaction();
-                
-                // Mettre à jour les informations du client
+
                 if (!empty($new_password)) {
-                    // Si un nouveau mot de passe est fourni, le hasher et le mettre à jour
                     $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
                     $updateClient = $pdo->prepare("UPDATE client SET nom = :nom, email = :email, mot_de_passe = :mot_de_passe WHERE client_id = :client_id");
                     $updateClient->bindParam(':mot_de_passe', $hashed_password, PDO::PARAM_STR);
                 } else {
-                    // Sinon, mettre à jour uniquement le nom et l'email
                     $updateClient = $pdo->prepare("UPDATE client SET nom = :nom, email = :email WHERE client_id = :client_id");
                 }
-                
+
                 $updateClient->bindParam(':nom', $nom, PDO::PARAM_STR);
                 $updateClient->bindParam(':email', $email, PDO::PARAM_STR);
                 $updateClient->bindParam(':client_id', $client_id, PDO::PARAM_INT);
                 $updateClient->execute();
-                
-                // Traiter les adresses existantes
+
                 if (isset($_POST['adresse_id']) && is_array($_POST['adresse_id'])) {
                     foreach ($_POST['adresse_id'] as $key => $adresse_id) {
+                        $client_adresse = trim($_POST['client_adresse'][$key] ?? '');
                         $ville = trim($_POST['ville'][$key] ?? '');
                         $code_postal = trim($_POST['code_postal'][$key] ?? '');
                         $pays = trim($_POST['pays'][$key] ?? '');
-                        
+
                         if (!empty($ville) && !empty($code_postal)) {
-                            // Mettre à jour l'adresse existante
-                            $updateAdresse = $pdo->prepare("UPDATE client_adresse SET ville = :ville, code_postal = :code_postal, pays = :pays WHERE adresse_id = :adresse_id");
+                            $updateAdresse = $pdo->prepare("UPDATE client_adresse SET client_adresse = :client_adresse, ville = :ville, code_postal = :code_postal, pays = :pays WHERE adresse_id = :adresse_id");
+                            $updateAdresse->bindParam(':client_adresse', $client_adresse, PDO::PARAM_STR);
                             $updateAdresse->bindParam(':ville', $ville, PDO::PARAM_STR);
                             $updateAdresse->bindParam(':code_postal', $code_postal, PDO::PARAM_STR);
                             $updateAdresse->bindParam(':pays', $pays, PDO::PARAM_STR);
@@ -76,42 +67,38 @@ try {
                         }
                     }
                 }
-                
-                // Ajouter une nouvelle adresse si fournie
+
+                $new_client_adresse = trim($_POST['new_client_adresse'] ?? '');
                 $new_ville = trim($_POST['new_ville'] ?? '');
                 $new_code_postal = trim($_POST['new_code_postal'] ?? '');
                 $new_pays = trim($_POST['new_pays'] ?? '');
-                
+
                 if (!empty($new_ville) && !empty($new_code_postal)) {
-                    $insertAdresse = $pdo->prepare("INSERT INTO client_adresse (client_id, ville, code_postal, pays) VALUES (:client_id, :ville, :code_postal, :pays)");
+                    $insertAdresse = $pdo->prepare("INSERT INTO client_adresse (client_id, client_adresse, ville, code_postal, pays) VALUES (:client_id, :client_adresse, :ville, :code_postal, :pays)");
+                    $insertAdresse->bindParam(':client_adresse', $new_client_adresse, PDO::PARAM_STR);
                     $insertAdresse->bindParam(':client_id', $client_id, PDO::PARAM_INT);
                     $insertAdresse->bindParam(':ville', $new_ville, PDO::PARAM_STR);
                     $insertAdresse->bindParam(':code_postal', $new_code_postal, PDO::PARAM_STR);
                     $insertAdresse->bindParam(':pays', $new_pays, PDO::PARAM_STR);
                     $insertAdresse->execute();
                 }
-                
-                // Validation de la transaction
+
                 $pdo->commit();
-                
                 $message = 'Client mis à jour avec succès';
-                // Redirection après 2 secondes
                 header("refresh:2;url=admin_clients.php");
             }
         }
     }
-    
-    // Récupérer les informations du client
+
     $clientStmt = $pdo->prepare("SELECT * FROM client WHERE client_id = :client_id");
     $clientStmt->bindParam(':client_id', $client_id, PDO::PARAM_INT);
     $clientStmt->execute();
-    
+
     if ($clientStmt->rowCount() > 0) {
         $client = $clientStmt->fetch(PDO::FETCH_ASSOC);
         $nom = $client['nom'];
         $email = $client['email'];
-        
-        // Récupérer les adresses du client
+
         $adresseStmt = $pdo->prepare("SELECT * FROM client_adresse WHERE client_id = :client_id");
         $adresseStmt->bindParam(':client_id', $client_id, PDO::PARAM_INT);
         $adresseStmt->execute();
@@ -285,14 +272,19 @@ try {
                 
                 <?php if (count($adresses) > 0): ?>
                     <?php foreach ($adresses as $index => $adresse): ?>
+
+                        <div class="adresse-col">
+                                <label for="client_adresse<?= $index ?>">Adresse exacte</label>
+                                <input type="text" id="client_adresse<?= $index ?>" name="client_adresse[<?= $index ?>]" value="<?= htmlspecialchars($adresse['client_adresse'] ?? '') ?>">
+                        </div>
                         <div class="adresse-container">
                             <input type="hidden" name="adresse_id[<?= $index ?>]" value="<?= $adresse['adresse_id'] ?>">
                             
-                            <div class="adresse-row">
-                                <div class="adresse-col">
-                                    <label for="ville<?= $index ?>">Ville</label>
-                                    <input type="text" id="ville<?= $index ?>" name="ville[<?= $index ?>]" value="<?= htmlspecialchars($adresse['ville']) ?>">
-                                </div>
+                        <div class="adresse-row">
+                        <div class="adresse-col">
+                            <label for="ville<?= $index ?>">Ville</label>
+                            <input type="text" id="ville<?= $index ?>" name="ville[<?= $index ?>]" value="<?= htmlspecialchars($adresse['ville']) ?>">
+                        </div>
                                 
                                 <div class="adresse-col">
                                     <label for="code_postal<?= $index ?>">Code postal</label>
@@ -313,25 +305,27 @@ try {
                 <?php endif; ?>
                 
                 <div class="section-title">Ajouter une nouvelle adresse</div>
-                
-                <div class="adresse-container">
-                    <div class="adresse-row">
-                        <div class="adresse-col">
-                            <label for="new_ville">Ville</label>
-                            <input type="text" id="new_ville" name="new_ville">
+
+                    <div class="adresse-container">
+                        <div class="form-group">
+                            <label for="new_client_adresse">Adresse exacte</label>
+                            <input type="text" id="new_client_adresse" name="new_client_adresse">
                         </div>
-                        
-                        <div class="adresse-col">
-                            <label for="new_code_postal">Code postal</label>
-                            <input type="text" id="new_code_postal" name="new_code_postal">
-                        </div>
-                        
-                        <div class="adresse-col">
-                            <label for="new_pays">Pays</label>
-                            <input type="text" id="new_pays" name="new_pays">
+                        <div class="adresse-row">
+                            <div class="adresse-col">
+                                <label for="new_ville">Ville</label>
+                                <input type="text" id="new_ville" name="new_ville">
+                            </div>
+                            <div class="adresse-col">
+                                <label for="new_code_postal">Code postal</label>
+                                <input type="text" id="new_code_postal" name="new_code_postal">
+                            </div>
+                            <div class="adresse-col">
+                                <label for="new_pays">Pays</label>
+                                <input type="text" id="new_pays" name="new_pays">
+                            </div>
                         </div>
                     </div>
-                </div>
                 
                 <div class="buttons">
                     <button type="submit" class="btn btn-primary">Mettre à jour</button>
