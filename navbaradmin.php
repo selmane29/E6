@@ -40,14 +40,15 @@ if (session_status() === PHP_SESSION_NONE) {
                 </button>
             </form>
 
-                    <?php if (isset($_SESSION['username'])): ?>
-            <div class="d-flex align-items-center" style="color: #0D6EFD; font-weight: bold;">
-                👋 Bonjour, <?= htmlspecialchars($_SESSION['username']) ?> &nbsp;
-                <a href="logout.php" class="btn btn-outline-primary btn-sm ms-2">Déconnexion</a>
-            </div>
-        <?php else: ?>
-            <a href="connection.php" class="btn btn-primary btn-sm">Connexion</a>
-        <?php endif; ?>
+            <?php if (isset($_SESSION['email'])): ?>
+                <div class="d-flex align-items-center" style="color: #0D6EFD; font-weight: bold;">
+                    👋 Bonjour : <?= htmlspecialchars($_SESSION['email']) ?> 
+                    (<?= htmlspecialchars($_SESSION['role']) ?>)
+                    <a href="logout.php" class="btn btn-outline-primary btn-sm ms-2">Déconnexion</a>
+                </div>
+            <?php else: ?>
+                <a href="connection.php" class="btn btn-primary btn-sm">Connexion</a>
+            <?php endif; ?>
 
         </div>
     </div>
