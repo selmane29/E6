@@ -122,18 +122,6 @@ try {
     <h2>Paiement effectué avec succès !</h2>
     <p>Merci <strong><?= htmlspecialchars($nom) ?></strong> pour votre commande.</p>
     <p>Un email de confirmation sera envoyé à <strong><?= htmlspecialchars($email) ?></strong>.</p>
-    
-    <a href="stage.php" style="
-    display: inline-block;
-    margin-top: 20px;
-    padding: 10px 20px;
-    background-color: #007BFF;
-    color: white;
-    text-decoration: none;
-    border-radius: 5px;
-">
-    ⬅ Retour à l'accueil
-    </a>
     </div>
 
 </body>
