@@ -25,9 +25,7 @@ $result = $conn->query($sql);
     <style>
         .admin-page {
             background-color: #f5f5f5;
-            padding-top: 0px;
-            padding-left: 0px;
-            padding-right: 0px;
+            padding: 80px 20px 20px; /* top left/right bottom */
         }
         .btn-add {
             background-color: #4CAF50;

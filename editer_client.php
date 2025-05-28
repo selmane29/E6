@@ -127,7 +127,7 @@ try {
         }
         body {
             margin: 0;
-            padding: 20px;
+            padding: 70px 20px 20px;
             background-color: #f5f5f5;
         }
         .container {
@@ -234,8 +234,13 @@ try {
             color: white;
         }
     </style>
+
+<!-- Bootstrap CSS + JS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
+    <?php include 'navbaradmin.php'; ?>
     <div class="container">
         <div class="header">
             <h1>Modifier le client</h1>
@@ -274,7 +279,6 @@ try {
                     <?php foreach ($adresses as $index => $adresse): ?>
 
                         <div class="adresse-col">
-                                <label for="client_adresse<?= $index ?>">Adresse exacte</label>
                                 <input type="text" id="client_adresse<?= $index ?>" name="client_adresse[<?= $index ?>]" value="<?= htmlspecialchars($adresse['client_adresse'] ?? '') ?>">
                         </div>
                         <div class="adresse-container">

@@ -176,7 +176,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
 </head>
 <body>
     <header>
-        <h1>Supprimer un produit</h1>
+        <h1 class="text-center">Supprimer le produit</h1>
     </header>
 
     <div class="container">
@@ -189,7 +189,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
         <?php endif; ?>
 
         <?php if (isset($product) && !isset($_GET['confirm'])): ?>
-            <h2>Êtes-vous sûr de vouloir supprimer ce produit ?</h2>
+            <h2>Ce produit sera supprimé, confirmer ?</h2>
             
             <div class="product-info">
                 <p><strong>ID:</strong> <?php echo $product['produit_id']; ?></p>
@@ -204,7 +204,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
             
             <div class="buttons">
                 <a href="supprimer_produit.php?id=<?php echo $id; ?>&confirm=yes" class="btn btn-danger">Confirmer la suppression</a>
-                <a href="admin_produits.php" class="btn btn-secondary">Annuler</a>
+                <a href="stock.php" class="btn btn-secondary">Annuler</a>
             </div>
         <?php elseif (empty($errorMessage) && empty($product)): ?>
             <p>Redirection vers la page d'administration...</p>
