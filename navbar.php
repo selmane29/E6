@@ -20,7 +20,6 @@ if (session_status() === PHP_SESSION_NONE) {
                 <li class="nav-item">
                     <a class="nav-link" href="profil.php" style="color: #0D6EFD;">profil</a>
                 </li>
-
                 <li class="nav-item d-flex align-items-center">
                     <a class="nav-link position-relative" href="mon_panier.php" style="color: #0D6EFD;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#0D6EFD" class="bi bi-cart" viewBox="0 0 16 16">
@@ -36,22 +35,24 @@ if (session_status() === PHP_SESSION_NONE) {
                 </li>
             </ul>
 
-            <form class="d-flex me-3 position-relative" action="search.php" method="get" style="width: 250px;">
-                <input type="text" name="query" placeholder="Recherche un produit..." 
-                    class="form-control ps-5" 
-                    style="border: 3px solid #0D6EFD; border-radius: 50px;" required>
-                <button type="submit" class="btn position-absolute" style="top: 50%; left: 15px; transform: translateY(-50%); background: none; border: none; padding: 0;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#0D6EFD" class="bi bi-search" viewBox="0 0 16 16">
-                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 
-                                1.415-1.414l-3.85-3.85zm-5.242 1.356a5.5 5.5 
-                                0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
+            <!-- Barre de recherche stylisée -->
+            <form class="d-flex me-3" action="search.php" method="get" style="max-width: 300px; width: 100%;">
+                <input type="text" name="query" placeholder="Rechercher un produit"
+                    class="form-control" required
+                    style="border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;">
+                <button type="submit" class="btn"
+                    style="background-color: #0B5ED7; border: none; border-radius: 0 4px 4px 0; padding: 6px 10px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="white" stroke-width="2" viewBox="0 0 16 16">
+                        <circle cx="6.5" cy="6.5" r="5.5"/>
+                        <line x1="11" y1="11" x2="15" y2="15" />
                     </svg>
                 </button>
             </form>
 
+            <!-- Connexion utilisateur -->
             <?php if (isset($_SESSION['email'])): ?>
                 <div class="d-flex align-items-center" style="color: #0D6EFD; font-weight: bold;">
-                    👋 Bonjour, <?= htmlspecialchars($_SESSION['email']) ?> (<?= $_SESSION['role'] ?>)
+                    👋 Bonjour, <?= htmlspecialchars($_SESSION['email']) ?> (<?= htmlspecialchars($_SESSION['role']) ?>)
                     <a href="logout.php" class="btn btn-outline-primary btn-sm ms-2">Déconnexion</a>
                 </div>
             <?php else: ?>
@@ -86,14 +87,6 @@ if (session_status() === PHP_SESSION_NONE) {
         color: #0D6EFD !important;
     }
 
-    .search-icon {
-        filter: invert(26%) sepia(72%) saturate(2422%) hue-rotate(111deg) brightness(89%) contrast(100%);
-    }
-
-    .search-icon:hover {
-        filter: invert(38%) sepia(75%) saturate(2326%) hue-rotate(119deg) brightness(77%) contrast(111%);
-    }
-
     .navbar-toggler {
         border: 1px solid #0D6EFD;
     }
@@ -103,7 +96,7 @@ if (session_status() === PHP_SESSION_NONE) {
         border-radius: 5px;
     }
 
-    .form-control:focus {   
+    .form-control:focus {
         box-shadow: 0 0 5px #0D6EFD;
         border: 1px solid #0D6EFD;
     }
