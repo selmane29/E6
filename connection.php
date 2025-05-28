@@ -1,113 +1,90 @@
 <?php
+// Affichage des erreurs
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 session_start();
 ?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+
     <title>Connexion</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <style>
-        /* Custom button style */
-        .btn-primary {
-            background-color: #0D6EFD;
-            border-color: #0D6EFD;
-        }
-
-        .btn-primary:hover {
-            background-color: #0b5ed7;
-            border-color: #0b5ed7;
-        }
-    </style>
 </head>
-<body>
-    <?php include('navbar.php'); ?>
+<body class="container mt-5">
+    <?php include 'navbar.php'; ?>
 
-    <div class="container mt-5">
-        <h1>Connexion</h1>
+    <h1>Connexion</h1>
 
-        <?php
-        // Traitement du formulaire lorsqu'il est soumis
-        if ($_SERVER["REQUEST_METHOD"] == "POST") {
-            $username = $_POST['username'] ?? '';
-            $password = $_POST['password'] ?? '';
+    <?php
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        $username = $_POST['username'] ?? '';
+        $password = $_POST['password'] ?? '';
+        $errors = [];
 
-            // Initialisation des messages d'erreur
-            $errors = [];
+        if (empty($username)) $errors[] = "Le nom d'utilisateur est requis.";
+        if (empty($password)) $errors[] = "Le mot de passe est requis.";
 
-            // Vérification de la complétion de tous les champs
-            if (empty($username)) {
-                $errors[] = "Le nom d'utilisateur est requis.";
-            }
-            if (empty($password)) {
-                $errors[] = "Le mot de passe est requis.";
-            }
+        if (empty($errors)) {
+            $servername = "localhost";
+            $dbUsername = "root";
+            $dbPassword = "";
+            $dbname = "informatique";
 
-            // Si aucun message d'erreur, continuer avec la vérification
-            if (empty($errors)) {
-                // Connexion à la base de données
-                $servername = "localhost";
-                $dbUsername = "root";
-                $dbPassword = "";
-                $dbname = "informatique";
+            try {
+                $conn = new PDO("mysql:host=$servername;dbname=$dbname", $dbUsername, $dbPassword);
+                $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-                try {
-                    $conn = new PDO("mysql:host=$servername;dbname=$dbname", $dbUsername, $dbPassword);
-                    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                $stmt = $conn->prepare("SELECT * FROM client WHERE nom = :identifiant OR email = :identifiant");
+                $stmt->bindParam(':identifiant', $username);
+                $stmt->execute();
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                    // Requête SQL pour vérifier les informations de connexion
-                    $stmt = $conn->prepare("SELECT * FROM client WHERE nom = :identifiant OR email = :identifiant");
-                    $stmt->bindParam(':identifiant', $username);
-                    $stmt->execute();
-                    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($user && password_verify($password, $user['mot_de_passe'])) {
+                    $_SESSION['client_id'] = $user['client_id'];
+                    $_SESSION['email'] = $user['email'];
+                    $_SESSION['role'] = $user['role'];
 
-                    // Vérification du mot de passe
-                    if ($user && password_verify($password, $user['mot_de_passe'])) {
-                        $_SESSION['username'] = $username; // Stocker le nom d'utilisateur dans la session
-                        echo '<div class="alert alert-success">Connexion réussie ! Redirection en cours...</div>';
-                        echo '<script>
-                            setTimeout(function() {
-                                window.location.href = "Stage.php";
-                            }, 1000);
-                        </script>';
-                        exit();
+                    echo '<div class="alert alert-success">Connexion réussie !</div>';
+
+                    if ($user['role'] === 'admin') {
+                        echo '<script>window.location.href = "admin.php";</script>';
                     } else {
-                        $errors[] = "Nom d'utilisateur ou mot de passe incorrect.";
+                        echo '<script>window.location.href = "Stage.php";</script>';
                     }
-                } catch(PDOException $e) {
-                    $errors[] = "Erreur : " . $e->getMessage();
+                    exit();
+                } else {
+                    $errors[] = "Nom d'utilisateur ou mot de passe incorrect.";
                 }
-                $conn = null;
-            }
-
-            // Affichage des messages d'erreur
-            if (!empty($errors)) {
-                echo '<div class="alert alert-danger"><ul>';
-                foreach ($errors as $error) {
-                    echo '<li>' . htmlspecialchars($error) . '</li>';
-                }
-                echo '</ul></div>';
+            } catch(PDOException $e) {
+                $errors[] = "Erreur : " . $e->getMessage();
             }
         }
-        ?>
 
-        <form action="connection.php" method="post">
-            <div class="mb-3">
-                <label for="username" class="form-label">Nom d'utilisateur ou Email :</label>
-                <input type="text" class="form-control" id="username" name="username" required>
-            </div>
-            <div class="mb-3">
-                <label for="password" class="form-label">Mot de passe :</label>
-                <input type="password" class="form-control" id="password" name="password" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Se connecter</button>
-            <p class="mt-3">Pas encore de compte ? <a href="inscriptions.php">Inscrivez-vous ici</a>.</p>
-        </form>
-    </div>
+        if (!empty($errors)) {
+            echo '<div class="alert alert-danger"><ul>';
+            foreach ($errors as $error) {
+                echo '<li>' . htmlspecialchars($error) . '</li>';
+            }
+            echo '</ul></div>';
+        }
+    }
+    ?>
 
-    <?php include('footers.php'); ?>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <form action="" method="post">
+        <div class="mb-3">
+            <label for="username" class="form-label">Nom d'utilisateur ou Email :</label>
+            <input type="text" class="form-control" id="username" name="username" required>
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Mot de passe :</label>
+            <input type="password" class="form-control" id="password" name="password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Se connecter</button>
+        <p class="mt-3">Pas encore de compte ? <a href="inscriptions.php">Inscrivez-vous ici</a>.</p>
+    </form>
 </body>
 </html>
