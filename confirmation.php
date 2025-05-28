@@ -1,9 +1,16 @@
 <?php
+session_start();
+
+require 'vendor/autoload.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
 // Connexion à la base de données
 $host = 'localhost';
 $db = 'informatique';
 $user = 'root';
-$pass = ''; // À adapter selon ta config
+$pass = '';
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8", $user, $pass);
@@ -28,7 +35,6 @@ $client = $stmt->fetch();
 if ($client) {
     $client_id = $client['client_id'];
 } else {
-    // Insère un nouveau client (mot_de_passe vide ici à titre temporaire)
     $stmt = $pdo->prepare("INSERT INTO client (nom, email, mot_de_passe) VALUES (?, ?, '')");
     $stmt->execute([$nom, $email]);
     $client_id = $pdo->lastInsertId();
@@ -50,12 +56,10 @@ $stmt->execute([$client_id]);
 $panier_items = $stmt->fetchAll();
 
 foreach ($panier_items as $item) {
-    // Récupère le prix du produit
     $stmt = $pdo->prepare("SELECT prix FROM produit WHERE produit_id = ?");
     $stmt->execute([$item['produit_id']]);
     $prix = $stmt->fetchColumn();
 
-    // Insère dans commande_produit
     $stmt = $pdo->prepare("INSERT INTO commande_produit (commande_id, produit_id, quantite, prix) VALUES (?, ?, ?, ?)");
     $stmt->execute([$commande_id, $item['produit_id'], $item['quantite'], $prix]);
 }
@@ -64,6 +68,31 @@ foreach ($panier_items as $item) {
 $stmt = $pdo->prepare("DELETE FROM panier WHERE client_id = ?");
 $stmt->execute([$client_id]);
 
+// Envoi de l'email de confirmation
+$mail = new PHPMailer(true);
+
+try {
+    $mail->isSMTP();
+    $mail->Host = 'smtp.gmail.com';
+    $mail->SMTPAuth = true;
+    $mail->Username = 'selmane.292002@gmail.com'; // Ton email
+    $mail->Password = 'dqgzvbbrwflxwzla';      // Mot de passe d'application
+    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+    $mail->Port = 587;
+
+    $mail->setFrom('selmane.292002@gmail.com', 'Informatique.net');
+    $mail->addAddress($email, $nom);
+
+    $mail->isHTML(true);
+    $mail->Subject = 'Confirmation de votre commande';
+    $mail->Body = "<h2>Merci pour votre commande, $nom !</h2>
+        <p>Commande n° <strong>$commande_id</strong> enregistrée avec succès.</p>
+        <p>Livraison : $adresse, $code_postal $ville, $pays</p>";
+
+    $mail->send();
+} catch (Exception $e) {
+    error_log("Erreur mail : {$mail->ErrorInfo}");
+}
 ?>
 
 <!DOCTYPE html>
@@ -90,11 +119,22 @@ $stmt->execute([$client_id]);
 </head>
 <body>
     <div class="confirmation">
-        <h2>Paiement effectué avec succès !</h2>
-        <p>Merci <strong><?= htmlspecialchars($nom) ?></strong> pour votre commande.</p>
-        <p>Un email de confirmation sera envoyé à <strong><?= htmlspecialchars($email) ?></strong>.</p>
+    <h2>Paiement effectué avec succès !</h2>
+    <p>Merci <strong><?= htmlspecialchars($nom) ?></strong> pour votre commande.</p>
+    <p>Un email de confirmation sera envoyé à <strong><?= htmlspecialchars($email) ?></strong>.</p>
+    
+    <a href="stage.php" style="
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #007BFF;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+">
+    ⬅ Retour à l'accueil
+    </a>
     </div>
+
 </body>
 </html>
-
-
