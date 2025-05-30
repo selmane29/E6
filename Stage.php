@@ -188,6 +188,13 @@ try {
                                         <p class="card-text fw-semibold">€<?= number_format($p['prix'], 2, ',', ' ') ?></p>
                                     </div>
                                     <a href="product_detail.php?id=<?= $p['produit_id'] ?>" class="btn btn-primary mt-2">Voir Détails</a>
+
+                                    <form method="post" action="ajouter_favoris.php" class="mt-2">
+                                        <input type="hidden" name="produit_id" value="<?= $p['produit_id'] ?>">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                                            ❤️ Ajouter aux favoris
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </div>

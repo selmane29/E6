@@ -20,6 +20,12 @@ if (session_status() === PHP_SESSION_NONE) {
                 <li class="nav-item">
                     <a class="nav-link" href="profil.php">Profil</a>
                 </li>
+
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="favoris.php">Mes Favoris</a>
+                </li>
+
+
                 <li class="nav-item d-flex align-items-center">
                     <a class="nav-link position-relative" href="mon_panier.php">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="white" class="bi bi-cart" viewBox="0 0 16 16">
