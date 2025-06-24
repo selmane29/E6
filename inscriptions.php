@@ -5,7 +5,6 @@ $registrationSuccess = false;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-
 require 'vendor/autoload.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -13,6 +12,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
     $confirmPassword = $_POST['confirm-password'] ?? '';
+    $animal = $_POST['animal'] ?? '';
     $recaptchaResponse = $_POST['g-recaptcha-response'] ?? '';
 
     $errors = [];
@@ -30,6 +30,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty($confirmPassword) || $password !== $confirmPassword) {
         $errors[] = "Les mots de passe doivent être identiques.";
     }
+    if (empty($animal)) {
+        $errors[] = "Veuillez renseigner votre animal préféré.";
+    }
 
     // Vérification du reCAPTCHA
     $recaptchaSecret = '6Le9YEkrAAAAAAzaNJPm_APpoux7cVzspWKiAgLC';
@@ -46,49 +49,49 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         try {
             $conn = new PDO("mysql:host=localhost;dbname=informatique", "root", "");
             $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    
+
             $password_hash = password_hash($password, PASSWORD_DEFAULT);
-    
-            $stmt = $conn->prepare("INSERT INTO client (nom, email, mot_de_passe) VALUES (:nom, :email, :password)");
+
+            $stmt = $conn->prepare("INSERT INTO client (nom, email, mot_de_passe, animal) VALUES (:nom, :email, :password, :animal)");
             $stmt->bindParam(':nom', $username);
             $stmt->bindParam(':email', $email);
             $stmt->bindParam(':password', $password_hash);
+            $stmt->bindParam(':animal', $animal);
             $stmt->execute();
-    
+
             // Envoi de l'email
             $mail = new PHPMailer(true);
 
             $mail->SMTPDebug = 2;
-            $mail->Debugoutput = 'html'; // debug du mailer
+            $mail->Debugoutput = 'html';
             $mail->isSMTP();
             $mail->Host       = 'smtp.gmail.com';
             $mail->SMTPAuth   = true;
             $mail->Username   = 'selmane.292002@gmail.com';
-            $mail->Password   = 'dqgzvbbrwflxwzla'; // ⚠ mot de passe d'application 
+            $mail->Password   = 'dqgzvbbrwflxwzla';
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = 587;
-    
+
             $mail->setFrom('selmane.292002@gmail.com', 'Informatique.net');
             $mail->addAddress($email, $username);
-    
+
             $mail->isHTML(true);
             $mail->Subject = 'Bienvenue chez informatique.net !';
             $mail->Body    = "<h1>Bienvenue $username !</h1><p>Merci de votre inscription.</p>";
-    
+
             if (!$mail->send()) {
                 echo "Erreur d'envoi : " . $mail->ErrorInfo;
-                exit(); //exit que je viens d'ajouter
+                exit();
             }
-    
-            // ✅ Redirection si tout est OK
+
             header("Location: connection.php");
             exit();
-    
+
         } catch (Exception $e) {
             echo "Erreur d'envoi : " . $e->getMessage();
         }
     }
-}              
+}
 ?>
 
 <!DOCTYPE html>
@@ -123,10 +126,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <label for="confirm-password" class="form-label">Confirmer le mot de passe :</label>
                 <input type="password" class="form-control" id="confirm-password" name="confirm-password" required>
             </div>
+            <div class="mb-3">
+                <label for="animal" class="form-label">Animal préféré :</label>
+                <input type="text" class="form-control" id="animal" name="animal">
+            </div>
 
             <div class="g-recaptcha mb-3" data-sitekey="6Le9YEkrAAAAAGd1U-aVxOK70P739SFxtYfxeioT"></div>
 
-            <button type="submit" class="btn btn-primary">S'inscrire</button>
+            <button type="submit" class="btn btn-primary">S'inscrire</button> 
+
+            <?php include 'banner.php'; ?>
         </form>
 
         <p id="error-msg"></p>

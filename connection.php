@@ -10,7 +10,6 @@ session_start();
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-
     <title>Connexion</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
@@ -23,10 +22,12 @@ session_start();
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $username = $_POST['username'] ?? '';
         $password = $_POST['password'] ?? '';
+        $animal = $_POST['animal'] ?? '';
         $errors = [];
 
         if (empty($username)) $errors[] = "Le nom d'utilisateur est requis.";
         if (empty($password)) $errors[] = "Le mot de passe est requis.";
+        if (empty($animal)) $errors[] = "L'animal préféré est requis.";
 
         if (empty($errors)) {
             $servername = "localhost";
@@ -44,18 +45,22 @@ session_start();
                 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
                 if ($user && password_verify($password, $user['mot_de_passe'])) {
-                    $_SESSION['client_id'] = $user['client_id'];
-                    $_SESSION['email'] = $user['email'];
-                    $_SESSION['role'] = $user['role'];
+                    if (strtolower(trim($user['animal'])) === strtolower(trim($animal))) {
+                        $_SESSION['client_id'] = $user['client_id'];
+                        $_SESSION['email'] = $user['email'];
+                        $_SESSION['role'] = $user['role'];
 
-                    echo '<div class="alert alert-success">Connexion réussie !</div>';
+                        echo '<div class="alert alert-success">Connexion réussie !</div>';
 
-                    if ($user['role'] === 'admin') {
-                        echo '<script>window.location.href = "admin.php";</script>';
+                        if ($user['role'] === 'admin') {
+                            echo '<script>window.location.href = "admin.php";</script>';
+                        } else {
+                            echo '<script>window.location.href = "Stage.php";</script>';
+                        }
+                        exit();
                     } else {
-                        echo '<script>window.location.href = "Stage.php";</script>';
+                        $errors[] = "L'animal préféré est incorrect.";
                     }
-                    exit();
                 } else {
                     $errors[] = "Nom d'utilisateur ou mot de passe incorrect.";
                 }
@@ -83,8 +88,14 @@ session_start();
             <label for="password" class="form-label">Mot de passe :</label>
             <input type="password" class="form-control" id="password" name="password" required>
         </div>
+        <div class="mb-3">
+            <label for="animal" class="form-label">Animal préféré :</label>
+            <input type="text" class="form-control" id="animal" name="animal" required>
+        </div>
         <button type="submit" class="btn btn-primary">Se connecter</button>
         <p class="mt-3">Pas encore de compte ? <a href="inscriptions.php">Inscrivez-vous ici</a>.</p>
+
+        <?php include 'banner.php'; ?>
     </form>
 </body>
 </html>
